@@ -1,15 +1,10 @@
-var benchpress = require('benchpress');
+var benchpress = require('@angular/benchpress');
+var perfy = require('../../protractor.conf').config.perfy;
 
 exports.Preset = (function () {
   function Preset() {
     this.iteration = arguments.length ? Array.prototype.slice.call(arguments) : [1000, 10000];
-    this.runner = new benchpress.Runner([
-      benchpress.SeleniumWebDriverAdapter.PROTRACTOR_BINDINGS,
-      benchpress.Validator.bindTo(benchpress.RegressionSlopeValidator),
-      benchpress.bind(benchpress.RegressionSlopeValidator.SAMPLE_SIZE).toValue(20),
-      benchpress.bind(benchpress.RegressionSlopeValidator.METRIC).toValue('scriptTime'),
-      benchpress.bind(benchpress.Options.FORCE_GC).toValue(false)
-    ]);
+    this.runner = new benchpress.Runner(perfy.providers(benchpress));
   }
 
   Preset.prototype.initBrowser = function (browser, url, value) {
@@ -23,11 +18,13 @@ exports.Preset = (function () {
       execute: function () {
         $(documentId).click();
       },
-      bindings: [
-        benchpress.bind(benchpress.Options.SAMPLE_DESCRIPTION).toValue({
+      bindings: [{
+        provide: benchpress.Options.SAMPLE_DESCRIPTION,
+        useValue: {
           iterations: value
-        })
-      ]};
+        }
+      }]
+    };
   };
 
   return Preset;

@@ -1,4 +1,5 @@
 var httpServer = require('http-server');
+var path = require('path');
 
 exports.config = {
   directConnect: true,
@@ -45,6 +46,41 @@ exports.config = {
 
   jasmineNodeOpts: {
     showColors: true,
-    defaultTimeoutInterval: 30000
+    defaultTimeoutInterval: 100000
   },
+
+  perfy: {
+    reportsFolder: './perf_reports',
+    reportsDataFolder: './perf_reports/data',
+    reportsFiles: './perf_reports/data/macro/*_*.json',
+
+    providers: function(benchpress) {
+      return [
+
+        //use protractor as Webdriver client
+        benchpress.SeleniumWebDriverAdapter.PROTRACTOR_PROVIDERS,
+
+        //use RegressionSlopeValidator to validate samples
+        { provide: benchpress.Validator, useExisting: benchpress.RegressionSlopeValidator },
+
+        //use 10 samples to calculate slope regression
+        { provide: benchpress.RegressionSlopeValidator.SAMPLE_SIZE, useValue: 20 },
+
+        //use the 'renderTime' metric to calculate slope regression
+        { provide: benchpress.RegressionSlopeValidator.METRIC, useValue: 'scriptTime' },
+        { provide: benchpress.Options.FORCE_GC, useValue: false },
+
+        // Add Reporters : Console + Json
+        benchpress.JsonFileReporter.PROVIDERS,
+
+        // Make sure this folder is already created and writable
+        { provide: benchpress.JsonFileReporter.PATH, useValue: path.resolve('./perf_reports/data/macro') },
+        benchpress.MultiReporter.provideWith([
+            benchpress.ConsoleReporter,
+            benchpress.JsonFileReporter
+        ])
+
+      ];
+    }
+  }
 };
